@@ -56,7 +56,27 @@ router.post('/tasks',auth,(req,res)=>{
 })
 
 router.get('/tasks',auth,(req,res)=>{
-    req.user.populate('tasks').execPopulate().then((tasks)=>{
+    const match ={}
+    const sort={}
+
+    if(req.query.completed){
+        match.completed=req.query.completed ==='true'
+    }
+
+    if(req.query.sortBy){
+        const parts=req.query.sortBy.split(':')
+        sort[parts[0]]=parts[1]==='desc'? -1:1
+    }
+    req.user.populate({
+        path:'tasks',
+        match,
+        options:{
+            limit:parseInt(req.query.limit),
+            skip:parseInt(req.query.skip),
+            sort
+        }
+    })
+        .execPopulate().then((tasks)=>{
         res.send(req.user.tasks)
     }).catch((e)=>{
         res.status(500).send()
